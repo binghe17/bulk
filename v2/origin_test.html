@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <style>
+        * {margin:0; padding:0;}
+        html, body {height:100%;}
+        #bulkBox {padding:2%; border:1px solid #ccc; text-align: center;margin:0 auto; max-width:400px; overflow: hidden;}
+        #bulkInput {padding:13px; text-align: center; font-size:15px; border:1px solid #000; vertical-align: middle; width: 66%; margin-right: 2%;}
+        #bulkInput:hover {font-weight: bold;}
+        #bulkBtn {padding:13px; background: #000; color:#fff;border:none; font-size:15px; vertical-align: middle; width:22%;}
+        #bulkBtn:hover {font-weight: bold;}
+        #bulkTip {padding: 10px; font-size: 12px; color:#555; width: 92%; margin: 0 auto;}
+        .bulkResult { padding: 10px; border: 1px solid #d7d5d5; margin: 0 auto; margin-top: 5px; font-size:14px; width:92%;}
+        #downBox {display:none; width:400px;margin:10px auto; padding:10px; background:#eee}
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="drop.js"></script>
+    <script src="csv2array.js"></script>
+    <!-- <script src="originAjax.js"></script> -->
+    <script src="origin_test.php"></script>
+    <!-- <script src="xlsx.core.min.js"></script>
+    <script src="FileSaver.js"></script>
+    <script src="main_excel.js"></script> -->
+
+</head>
+<body onselectstart="return false;">
+    <div>console열고 확인</div>
+    <button onclick="test1()">test1</button>
+    <button onclick="test2()">test2</button>
+    <button onclick="test3()">test3</button>
+    <button onclick="test4()">test4</button>
+    <button onclick="test5()">test5</button>
+    <script>
+
+    
+    function test1(){
+        originAjax('origin_test.php?m=1', '', function(){
+            console.log(res ) //전역변수res
+        });
+    }
+    
+    function test2(){
+        originAjax('origin_test.php?m=2', '', function(){
+            console.log('test2 실행완료' )
+        });
+    }
+        
+    function test3(){
+        originAjax('origin_test.php?m=3');
+    }
+        
+    function test4(){
+        originAjax('origin_test.php?m=4');
+    }
+
+    function test5(){
+        originAjax('origin_test.php?m=5',{mode:'getTextFile'});
+    }
+        
+       
+    </script>
+
+
+</body>
+</html>

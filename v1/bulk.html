@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <style>
+        * {margin:0; padding:0;}
+        html, body {height:100%;}
+        #bulkBox {padding:30px; border:1px solid #ccc; width:400px;text-align: center;margin:0 auto;}
+        #bulkInput {padding:13px; text-align: center; font-size:15px; border:1px solid #000; vertical-align: middle;  /* width:254px; */   width: 70%; margin-right: 5px;}
+        #bulkInput:hover {font-weight: bold;}
+        #bulkBtn {padding:13px; background: #000; color:#fff;border:none; font-size:15px; vertical-align: middle; width:21%;}
+        #bulkBtn:hover {font-weight: bold;}
+        #bulkTip {padding: 10px; font-size: 14px; color:#555;}
+        .bulkResult { padding: 10px; border: 1px solid #d7d5d5; margin: 0 auto; margin-top: 5px; }
+        #downBox {display:none; width:400px;margin:10px auto; padding:10px; background:#eee}
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="drop.js"></script>
+    <script src="csv2array.js"></script>
+    <!-- <script src="xlsx.core.min.js"></script>
+    <script src="FileSaver.js"></script>
+    <script src="main_excel.js"></script> -->
+
+</head>
+<body onselectstart="return false;">
+
+
+    <div id="downBox">
+        <a href="https://esrkor.cafe24.com/disp/admin/shop1/skin/mobilelist#none" target="_blank">1.Cafe24 Admin Login</a><br>
+        <a id="downPage" href="javascript:;" target="_blank">2.download Excel Page</a><br>
+        <a id="downUrl" href="javascript:;" target="_blank">2.download Excel File</a><br>
+        3.File Upload (Drag file to this page!) 
+    </div>
+
+
+    <div id="bulkBox">
+        <input type="text" id="bulkInput" placeholder="아이디를 입력해주세요"><button id="bulkBtn">검색</button>
+        <div id="bulkResult"></div>
+        <div id="bulkTip">※정확한 실구매액은 마이페이지에서 확인해주세요! <span id="bulkTime"></span></div>
+    </div>
+
+
+    <script>
+
+    // 1. 아이디 검색창에 본인 아이디를 넣고 검색버튼을 누르면
+    // 2. 
+    //     데이터에 아이디가 있을 경우
+    //     예1) 7월 릴레이ON 성공! 8월에도 15,000원을 구매해주시면 적립금 1,500원 적립!
+
+    //     데이터에 아이디가 없을 경우
+    //     예2) 7월 릴레이ON 금액이 모자랍니다ㅠ_ㅠ! 실 결제금액을 확인해주세요.
+
+    // 3. 데이터는 매일, 혹은 주 1회 엑셀 파일로 업로드.
+    // -> 데이터 안에 있으면 예1 문구 노출 / 데이터 안에 없으면 예2 문구 노출
+
+    // 예)
+    // hjm1507
+    // opis002
+    // psc333
+    // aa765765a
+    // pej7152
+    // xaverius1203
+    // 등등
+
+ 
+    function getInitDatas(){
+        $.ajax({
+            type: "post",
+            url: "savefile.php?mode=getTextFile",
+            // data: ,
+            dataType: "text",
+            success: function (res) {
+                let data = res;
+                // console.log(res);
+                if(data == '' || data == 'null' || data == 'NOFILE'){
+                    window.csvData ={};
+                    window.csvData.maxPrice = 15000;
+                }else{
+                    window.csvData = JSON.parse(data);
+                    $('#bulkTime').html('<br>(최종 업데이트 시간: '+ window.csvData.lastTime +')' );
+                }
+            }
+        });
+    }
+    // getInitDatas();
+
+
+
+    $('#bulkInput').keydown(function(key){
+        // if(key.keyCode == 13) bulkFun();
+        if(key.keyCode == 13){
+            // let inputData = $('#bulkInput').val(); 
+            // if(inputData != '') 
+            searchId($('#bulkInput').val(), 15000);
+        } 
+    });
+
+    $('#bulkBtn').click(function(){
+        // bulkFun();
+        // let inputData = $('#bulkInput').val(); 
+        // if(inputData != '') 
+        searchId($('#bulkInput').val(), 15000);
+    })
+
+
+
+
+
+
+    // function bulkFun(){
+    //     $('#bulkResult').addClass('bulkResult');
+    //     if(typeof window.csvData.thisM == 'undefined'){
+    //         $('#bulkResult').html('<span style="color:red;">데이터가 없습니다.</span>');
+    //         return;
+    //     }
+    //     if( csvFunById( $('#bulkInput').val() , window.csvData.maxPrice ) ){
+    //         $('#bulkResult').html('<span style="color:blue;">'+ window.csvData.thisM +'월 릴레이ON 성공! '+ window.csvData.nextM +'월에도 릴레이ON 잊지 마세요!</span>');
+    //     }else{
+    //         $('#bulkResult').html('<span style="color:red;">'+ window.csvData.thisM +'월 릴레이ON 금액이 모자랍니다. 실구매액을 확인해주세요!</span>');
+    //     }
+    // }
+    //         //데이터 있은후
+    //         function csvFunById(id , maxPrice=15000){
+    //             if(typeof id == 'undefined' || id == '') return false; 
+    //             let obj = window.csvData.data;
+    //             if(typeof obj[id] != 'undefined' && obj[id] >= maxPrice) return true;
+    //             return false;
+    //         }
+
+
+    //------
+    //외부파일 드래그 삽입 
+    tagDrop(document.body, function(file){
+        // console.log(file,file[0].name);
+        if( file[0].name.indexOf('구매액상위회원_') == 0){
+            // let date=file[0].name.match('구매액상위회원_(.*)\.csv')[1];//파일시간
+            let date = new Date(file[0].lastModified);
+            let Y = date.getFullYear();
+            let m = (date.getMonth()+1).toString().padStart(2, 0);
+            let d = date.getDate().toString().padStart(2, 0);
+            let H = date.getHours().toString().padStart(2, 0);
+            let i = date.getMinutes().toString().padStart(2, 0);
+            let s = date.getSeconds().toString().padStart(2, 0);
+            let uTime = Y +'-'+ m +'-'+ d +' '+ H + ':' + i +':'+ s;
+            if(typeof window.csvData == 'undefined') {
+                window.csvData ={};
+                window.csvData.maxPrice = 15000;
+            }
+            window.csvData.lastTime = uTime;
+            // let Y = date.substr(0,4);
+            // let m = date.substr(4,2);
+            // let d = date.substr(6,2);
+            // let H = date.substr(8,2);
+            // let i = date.substr(10,2);
+            // console.log(date, Y, m , d , H, i);
+            // $('#bulkTime').html('<br>(최종 업데이트 시간: '+ uTime +')' );
+
+
+            let date2 = new Date(Y +'-'+ m +'-'+ d +' '+ H + ':' + i);
+            let thisM = Number(m);
+            let nextM = date2.setMonth( m );
+            nextM = date2.getMonth()+1;
+            window.csvData.thisM = thisM;
+            window.csvData.nextM = nextM;
+            // console.log(thisM +'월 데이터' ,  nextM +'월')
+        
+            let rs= csvFun(file[0].text);
+            window.csvData.data = rs;
+            console.log(window.csvData)
+            // let savedata = JSON.stringify(window.csvData);
+            savedata = window.csvData;
+            console.log(savedata)
+            $.ajax({
+                type: "post",
+                url: "savefile.php?mode=saveTextFile",
+                data: savedata,
+                dataType: "text",
+                success: function (res) {
+                    // console.log(res);
+                    $('#bulkTime').html('<br>(최종 업데이트 시간: '+ res +')' );
+                }
+            });
+
+
+            
+        }
+    });
+
+            //필요한 데이터만 추출
+            function csvFun(csv, maxPrice = 15000){
+                var obj = csv2array(csv, ',');
+                // console.log(obj);
+                var rs = {};
+                for (let i = 0; i < obj.length; i++) {
+                    // console.log(obj[i]);
+                    let price = Number(obj[i][10].replace(',',''));
+                    if(price >= maxPrice){
+                        rs[obj[i][1]] = price;
+                        // console.log( obj[i][1] +'------'+ obj[i][10] , price);
+                    }
+                }
+                return rs; 
+            }
+
+
+    function downUrl(){
+        let date1 = new Date();//현재 로컬시간
+        // date.setMonth(m);
+        date = new Date(date1.getFullYear(), date1.getMonth()+1, 1-1);//
+        let Y = date.getFullYear();
+        let m = (date.getMonth()+1).toString().padStart(2, 0);//이번달
+        // let d = date.getDate().toString().padStart(2, 0);//일
+        let lastDay = date.getDate().toString().padStart(2, 0);//일
+        // console.log(date, Y, m, '01', lastDay);
+        let startDate = Y + '-'+ m + '-01';
+        let endDate = Y +'-'+ m +'-'+ lastDay;
+        // console.log(startDate, endDate);
+        $('#downPage').attr('href', 'https://esrkor.cafe24.com/admin/php/shop1/c/best_buyer.php?mode=search&period=31&excel_private_auth=T&start_date='+ startDate +'&end_date='+ endDate +'&amount_type=order_amount&limit=10#none');
+        $('#downUrl').attr('href', 'https://esrkor.cafe24.com/admin/php/shop1/c/best_buyer.php?mode=download_excel&period=31&excel_private_auth=T&start_date='+ startDate +'&end_date='+ endDate +'&amount_type=order_amount&limit=10');
+        $('#downUrl').append(' ('+ startDate +'~'+ endDate + ')');
+    }
+
+    if(location.search == '?mode=dev'){
+        $('#downBox').show();
+        downUrl();
+    }
+
+
+
+    function searchId(id, maxPrice = 15000){
+        $.ajax({
+            type: "POST",
+            url: "savefile.php?mode=searchId",
+            data: {
+                id : id,
+                maxPrice : maxPrice
+            },
+            dataType: "text",
+            success: function (res) {
+                $('#bulkResult').addClass('bulkResult');
+                if( res == '' || res == 'NO_ID')  $('#bulkResult').html('<span style="color:red;">데이터가 없습니다.</span>');
+                else{
+                    res = JSON.parse(res);
+                    if(res.data == 'YES') $('#bulkResult').html('<span style="color:blue;">'+ res.thisM +'월 릴레이ON 성공! '+ res.nextM +'월에도 릴레이ON 잊지 마세요!</span>');
+                    else if(res.data == 'NO') $('#bulkResult').html('<span style="color:red;">'+ res.thisM +'월 릴레이ON 금액이 모자랍니다. 실구매액을 확인해주세요!</span>');
+                    $('#bulkTime').html('<br>(최종 업데이트 시간: '+ res.lastTime +')' );
+                } 
+                console.log(res);
+            }
+        });
+    }
+    // searchId('leecoo', 15000);
+
+    
+
+    </script>
+
+
+</body>
+</html>
